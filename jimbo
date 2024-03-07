@@ -4,3 +4,116 @@ version: 1.0.0
 codeOwners:
   - '0xc516105f5497457716892990e8A6D2b4FF516690'
 quorum: 1
+@@ -8,7 +8,7 @@ const runAsync = require('run-async')
+const chalk = require('chalk')
+
+function extendWithRegister (server) {
+  let registrator = remi(server)
+  const registrator = remi(server)
+  registrator.hook(require('remi-timeout')(5e3))
+  registrator.hook(require('remi-runner')())
+  registrator.hook(require('remi-dependencies')())
+@@ -20,7 +20,7 @@ function extendWithRegister (server) {
+}
+
+module.exports = function () {
+  let methods = {}
+  const methods = {}
+
+  let connectionOpts
+
+@@ -32,8 +32,9 @@ module.exports = function () {
+    uva
+      .server(connectionOpts)
+      .then(server => {
+        for (let methodName in methods)
+        for (let methodName in methods) {
+          server.addMethod(methodName, methods[methodName])
+        }
+
+        server.start()
+
+@@ -42,8 +43,9 @@ module.exports = function () {
+  })
+
+  function getValidationFunc (config) {
+    if (!config || !config.validate)
+    if (!config || !config.validate) {
+      return (params, cb) => cb(null, params)
+    }
+
+    let schema = joi.compile(config.validate)
+    return (params, cb) => joi.validate(params, schema, cb)
+@@ -52,11 +54,9 @@ module.exports = function () {
+  function method (opts) {
+    opts = opts || {}
+
+    if (!opts.name)
+      throw new Error('name is required')
+    if (!opts.name) throw new Error('name is required')
+
+    if (!opts.handler)
+      throw new Error('handler is required')
+    if (!opts.handler) throw new Error('handler is required')
+
+    let validationFunc = getValidationFunc(opts.config)
+
+@@ -90,11 +90,11 @@ module.exports = function () {
+    methods[opts.name] = thenify(_method)
+  }
+
+  let inject = thenify(function (opts, cb) {
+  const inject = thenify(function (opts, cb) {
+    methods[opts.methodName](opts.params, cb)
+  })
+
+  let jimboServer = {
+  const jimboServer = {
+    methods,
+    inject,
+    start,
+  14 changes: 6 additions & 8 deletions14  
+test/server.js
+@@ -14,9 +14,13 @@ chai.use(sinonChai)
+chai.use(chaiAsPromised)
+
+describe('Server method validation', function () {
+  it('should not execute handler if validation fails', function (done) {
+    let server = jimbo()
+  let server
+
+  beforeEach(() => {
+    server = jimbo()
+  })
+
+  it('should not execute handler if validation fails', function (done) {
+    let handlerSpy = sinon.spy()
+
+    server.method({
+@@ -45,8 +49,6 @@ describe('Server method validation', function () {
+  })
+
+  it('should execute handler if validation passes', function () {
+    let server = jimbo()
+
+    let handlerSpy = sinon.spy((params, cb) => {
+      expect(params.bar).to.eq('some string')
+      cb()
+@@ -75,8 +77,6 @@ describe('Server method validation', function () {
+  })
+
+  it('should return error if handler returns error', function (done) {
+    let server = jimbo()
+
+    server.method({
+      name: 'foo',
+      config: {
+@@ -99,8 +99,6 @@ describe('Server method validation', function () {
+  })
+
+  it('should execute handler if with any params is validation not specified', function () {
+    let server = jimbo()
+
+    let handlerSpy = sinon.spy((params, cb) => {
+      expect(params.bar).to.eq('some string')
+      cb()
